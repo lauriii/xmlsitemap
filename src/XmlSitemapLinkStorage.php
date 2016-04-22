@@ -77,6 +77,10 @@ class XmlSitemapLinkStorage implements XmlSitemapLinkStorageInterface {
       'changefreq' => isset($settings['changefreq']) ? $settings['changefreq'] : 0,
     );
 
+    if (method_exists($entity, 'getChangedTime')) {
+      $entity->xmlsitemap['lastmod'] = $entity->getChangedTime();
+    }
+
     $url = $entity->url();
     // The following values must always be checked because they are volatile.
     $entity->xmlsitemap['loc'] = $uri;
@@ -126,8 +130,8 @@ class XmlSitemapLinkStorage implements XmlSitemapLinkStorageInterface {
       ->fields(array(
         'loc' => $link['loc'],
         'subtype' => $link['subtype'],
-        'access' => $link['access'],
-        'status' => $link['status'],
+        'access' => (int) $link['access'],
+        'status' => (int) $link['status'],
         'status_override' => $link['status_override'],
         'lastmod' => $link['lastmod'],
         'priority' => $link['priority'],

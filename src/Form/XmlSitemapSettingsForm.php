@@ -252,7 +252,7 @@ class XmlSitemapSettingsForm extends ConfigFormBase {
       $config->set('frontpage_priority', $frontpage_priority);
       $config->set('frontpage_changefreq', $frontpage_changefreq);
       $config->save();
-      $this->linkStorage->save(array('type' => 'frontpage', 'id' => 0, 'subtype' => '', 'loc' => '', 'priority' => $frontpage_priority, 'changefreq' => $frontpage_changefreq));
+      $this->linkStorage->save(array('type' => 'frontpage', 'id' => 0, 'loc' => '', 'subtype' => '', 'priority' => $frontpage_priority, 'changefreq' => $frontpage_changefreq));
     }
     $this->state->set('xmlsitemap_developer_mode', $values['xmlsitemap_developer_mode']);
     $this->state->set('xmlsitemap_base_url', $values['xmlsitemap_base_url']);

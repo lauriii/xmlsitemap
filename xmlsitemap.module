@@ -764,9 +764,8 @@ function xmlsitemap_link_bundle_settings_save($entity, $bundle, array $settings,
   }
 
   foreach ($settings as $key => $value) {
-    \Drupal::configFactory()->getEditable("xmlsitemap.settings.{$entity}.{$bundle}")->set($key, $value);
+    \Drupal::configFactory()->getEditable("xmlsitemap.settings.{$entity}.{$bundle}")->set($key, $value)->save();
   }
-  \Drupal::configFactory()->getEditable("xmlsitemap.settings.{$entity}.{$bundle}")->save();
 
   foreach (\Drupal::languageManager()->getLanguages() as $lang) {
     \Drupal::cache()->delete('xmlsitemap:link_info:' . $lang->getId());
@@ -1129,7 +1128,7 @@ function xmlsitemap_add_form_link_options(array &$form, $entity, $bundle, $id) {
   $form['xmlsitemap'] = array(
     '#type' => 'details',
     '#tree' => TRUE,
-    '#title' => t('XML sitemap'),
+    '#title' => \Drupal::translation()->translate('XML sitemap'),
     '#collapsible' => TRUE,
     '#collapsed' => !$link['status_override'] && !$link['priority_override'],
     '#access' => $currentUser->hasPermission('administer xmlsitemap') || xmlsitemap_link_bundle_access($bundle_info),
@@ -1468,19 +1467,6 @@ function xmlsitemap_get_operation_link($url, $options = array()) {
 }
 
 /**
- * Implements hook_entity_info_alter().
- */
-function xmlsitemap_entity_info_alter(&$entity_info) {
-  if (!\Drupal::config('xmlsitemap.settings.user.user')->isNew()) {
-    return $entity_info;
-  }
-  $entity_info['user']['bundle label'] = t('User');
-  $entity_info['user']['xmlsitemap'] = array(
-    'process callback' => 'xmlsitemap_user_xmlsitemap_process_user_links',
-  );
-}
-
-/**
  * Returns HTML for an administration settings table.
  *
  * @param array $variables
@@ -1557,12 +1543,12 @@ function xmlsitemap_xmlsitemap_index_links($limit) {
     }
     try {
       $query = \Drupal::entityManager()->getStorage($entity_type_id)->getQuery();
-      $query->range(0, $limit);
-      if ($entity_type->get('type')) {
-        $query->condition('type', $entity_bundles, 'IN');
-      }
+      $query->condition('type', $entity_bundles, 'IN');
       $ids = $query->execute();
-      xmlsitemap_xmlsitemap_process_entity_links($entity_type_id, $ids);
+      while ($ids) {
+        $ids_part = array_splice($ids, 0, $limit);
+        xmlsitemap_xmlsitemap_process_entity_links($entity_type_id, $ids_part);
+      }
     }
     catch (QueryException $e) {
 
@@ -2035,7 +2021,7 @@ function xmlsitemap_add_link_bundle_settings(array &$form, FormStateInterface $f
     '#type' => 'select',
     '#title' => t('Inclusion'),
     '#options' => xmlsitemap_get_status_options(),
-    '#default_value' => $bundle_info['status'],
+    '#default_value' => (int) $bundle_info['status'],
   );
   $form['xmlsitemap']['priority'] = array(
     '#type' => 'select',
@@ -2379,7 +2365,6 @@ function xmlsitemap_regenerate_batch(array $smids = array()) {
     'error_message' => $t('An error has occurred.'),
     'finished' => 'xmlsitemap_regenerate_batch_finished',
     'title' => t('Regenerating Sitemap'),
-    'file' => drupal_get_path('module', 'xmlsitemap') . '/xmlsitemap.generate.inc',
   );
 
   // Set the regenerate flag in case something fails during file generation.
@@ -2521,8 +2506,7 @@ function xmlsitemap_rebuild_batch_fetch($entity, &$context) {
   }
   $info = $context['sandbox']['info'];
 
-  $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', $entity);
+  $query = \Drupal::entityQuery($entity);
   $query->entityCondition('entity_id', $context['sandbox']['last_id'], '>');
   $query->addTag('xmlsitemap_link_bundle_access');
   $query->addTag('xmlsitemap_rebuild');

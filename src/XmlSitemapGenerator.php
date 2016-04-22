@@ -14,6 +14,7 @@ use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Url;
+use \Psr\Log\LoggerInterface;
 
 /**
  * XmlSitemap generator service class.
@@ -70,6 +71,13 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
   protected $state;
 
   /**
+   * A logger instance.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
    * Constructs a XmlSitemapGenerator object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -78,12 +86,15 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
    *   The entity manager handler.
    * @param \Drupal\Core\State\StateInterface $state
    *   The state handler.
+   * @param \Psr\Log\LoggerInterface $logger
+   *   A logger instance.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, EntityManagerInterface $entity_manager, StateInterface $state, LanguageManagerInterface $language_manager) {
+  public function __construct(ConfigFactoryInterface $config_factory, EntityManagerInterface $entity_manager, StateInterface $state, LanguageManagerInterface $language_manager, LoggerInterface $logger) {
     $this->config = $config_factory->getEditable('xmlsitemap.settings');
     $this->entityManager = $entity_manager;
     $this->state = $state;
     $this->languageManager = $language_manager;
+    $this->logger = $logger;
   }
 
   /**
@@ -123,10 +134,9 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
     $this->setMemoryLimit();
 
     if ($this->state->get('xmlsitemap_developer_mode')) {
-      $message = t('Starting XML sitemap generation. Memory usage: @memory-peak.',
+      $this->logger->notice('Starting XML sitemap generation. Memory usage: @memory-peak.', array(
         array('@memory-peak' => format_size(memory_get_peak_usage(TRUE)),
-      ));
-      \Drupal::logger('xmlsitemap')->debug($message);
+      )));
     }
   }
 
@@ -188,7 +198,7 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
       $writer->endDocument();
     }
     catch (Exception $e) {
-      watchdog_exception('xmlsitemap', $e);
+      $this->logger->error($e);
       throw $e;
     }
 
@@ -291,7 +301,7 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
       $writer->endDocument();
     }
     catch (Exception $e) {
-      watchdog_exception('xmlsitemap', $e);
+      $this->logger->error($e);
       throw $e;
       return FALSE;
     }
@@ -362,13 +372,7 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
       drupal_set_message(t('The sitemaps were regenerated.'));
 
       // Show a watchdog message that the sitemap was regenerated.
-      $message = t('Finished XML sitemap generation in @elapsed. Memory usage: @memory-peak.',
-        array(
-          '@elapsed' => $elapsed,
-          '@memory-peak' => format_size(memory_get_peak_usage(TRUE)),
-        )
-      );
-      \Drupal::logger('xmlsitemap')->notice($message);
+      $this->logger->notice('Finished XML sitemap generation in @elapsed. Memory usage: @memory-peak.', ['@elapsed' => $elapsed, '@memory-peak' => format_size(memory_get_peak_usage(TRUE))]);
     }
     else {
       drupal_set_message(t('The sitemaps were not successfully regenerated.'), 'error');
@@ -407,8 +411,7 @@ class XmlSitemapGenerator implements XmlSitemapGeneratorInterface {
     }
     $info = $context['sandbox']['info'];
 
-    $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', $entity);
+    $query = \Drupal::entityQuery($entity);
     $query->entityCondition('entity_id', $context['sandbox']['last_id'], '>');
     $query->addTag('xmlsitemap_link_bundle_access');
     $query->addTag('xmlsitemap_rebuild');
