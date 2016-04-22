@@ -115,7 +115,7 @@ abstract class XmlSitemapTestBase extends WebTestBase {
   protected function assertNoResponse($code, $message = '', $group = 'Browser') {
     $curl_code = curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE);
     $match = is_array($code) ? in_array($curl_code, $code) : $curl_code == $code;
-    return $this->assertFalse($match, $message ? $message : t('HTTP response not expected !code, actual !curl_code', array('!code' => $code, '!curl_code' => $curl_code)), t('Browser'));
+    return $this->assertFalse($match, $message ? $message : t('HTTP response not expected @code, actual @curl_code', array('@code' => $code, '@curl_code' => $curl_code)), t('Browser'));
   }
 
   /**
@@ -378,11 +378,11 @@ abstract class XmlSitemapTestBase extends WebTestBase {
       $levels = watchdog_severity_levels();
     }
 
-    return t('@timestamp - @severity - @type - !message', array(
+    return t('@timestamp - @severity - @type - @message', array(
       '@timestamp' => $message->timestamp,
       '@severity' => $levels[$message->severity],
       '@type' => $message->type,
-        // '!message' => theme_dblog_message(array('event' => $message, 'link' => FALSE)),
+        // '@message' => theme_dblog_message(array('event' => $message, 'link' => FALSE)),
     ));
   }
 

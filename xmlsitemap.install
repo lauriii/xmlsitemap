@@ -67,7 +67,7 @@ function xmlsitemap_requirements($phase) {
         $items = array('#type' => 'item_list', 'items' => array_keys($directories));
         $requirements['xmlsitemap_directory']['value'] = $t('Not found or not writable');
         $requirements['xmlsitemap_directory']['severity'] = REQUIREMENT_ERROR;
-        $requirements['xmlsitemap_directory']['description'] = $t('The following directories were not found or are not writable by the server. See <a href="@docpage">@docpage</a> for more information. !directories', array('!directories' => drupal_render($items), '@docpage' => 'http://drupal.org/node/34025'));
+        $requirements['xmlsitemap_directory']['description'] = $t('The following directories were not found or are not writable by the server. See <a href="@docpage">@docpage</a> for more information. @directories', array('@directories' => drupal_render($items), '@docpage' => 'http://drupal.org/node/34025'));
       }
     }
     $sitemaps = xmlsitemap_sitemap_load_multiple();
@@ -121,7 +121,7 @@ function xmlsitemap_requirements($phase) {
     $generated_ago = REQUEST_TIME - $generated_last;
     $requirements['xmlsitemap_generated'] = array(
       'title' => $t('XML sitemap'),
-      'value' => $generated_last ? $t('Last attempted generation on !date (!interval ago).', array('!date' => format_date($generated_last, 'small'), '!interval' => \Drupal::service('date.formatter')->formatInterval($generated_ago))) : $t('Cached files have not been generated yet.'),
+      'value' => $generated_last ? $t('Last attempted generation on @date (@interval ago).', array('@date' => format_date($generated_last, 'small'), '@interval' => \Drupal::service('date.formatter')->formatInterval($generated_ago))) : $t('Cached files have not been generated yet.'),
       'severity' => REQUIREMENT_OK,
     );
     if (\Drupal::state()->get('xmlsitemap_rebuild_needed')) {
