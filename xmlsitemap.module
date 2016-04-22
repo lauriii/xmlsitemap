@@ -1764,6 +1764,7 @@ function xmlsitemap_query_xmlsitemap_generate_alter(AlterableInterface $query) {
   $current = $sitemap->context['language'];
   $default = \Drupal::languageManager()->getDefaultLanguage()->getId();
 
+
   if ($mode == 'mixed' && $current == $default) {
     // If mode is mixed but current = default, is the same as 'simple'.
     $mode = 'simple';
@@ -1772,27 +1773,27 @@ function xmlsitemap_query_xmlsitemap_generate_alter(AlterableInterface $query) {
   switch ($mode) {
     case 'simple':
       // Current language and language neutral.
-      $query->condition('language', array($current, LanguageInterface::LANGCODE_NOT_SPECIFIED));
+      $query->condition('language', array($current, LanguageInterface::LANGCODE_NOT_SPECIFIED), 'IN');
       break;
 
     case 'mixed':
       // Mixed current language (if available) or default language (if not) and language neutral.
-      $query->condition('language', array($current, $default, LanguageInterface::LANGCODE_NOT_SPECIFIED));
+      $query->condition('language', array($current, $default, LanguageInterface::LANGCODE_NOT_SPECIFIED), 'IN');
       break;
 
     case 'default':
       // Only default language and language neutral.
-      $query->condition('language', array($default, LanguageInterface::LANGCODE_NOT_SPECIFIED));
+      $query->condition('language', array($default, LanguageInterface::LANGCODE_NOT_SPECIFIED), 'IN');
       break;
 
     case 'strict':
       // Only current language (for nodes), simple for all other types.
       $node_condition = db_and();
-      $node_condition->condition('type', 'node');
-      $node_condition->condition('language', $current);
+      $node_condition->condition('type', 'node', 'IN');
+      $node_condition->condition('language', $current, 'IN');
       $normal_condition = db_and();
       $normal_condition->condition('type', 'node', '<>');
-      $normal_condition->condition('language', array($current, LanguageInterface::LANGCODE_NOT_SPECIFIED));
+      $normal_condition->condition('language', array($current, LanguageInterface::LANGCODE_NOT_SPECIFIED), 'IN');
       $condition = db_or();
       $condition->condition($node_condition);
       $condition->condition($normal_condition);
@@ -2264,11 +2265,11 @@ function _xmlsitemap_get_blurb($check_version = TRUE) {
     $blurb = FALSE;
     if (!$check_version || (($version = _xmlsitemap_get_version()) && preg_match('/dev|unstable|alpha|beta|HEAD/i', $version))) {
       $sponsors = array(
-        $this->l('Symantec', Url::fromUri('http://www.symantec.com/')),
-        $this->l('WebWise Solutions', Url::fromUri('http://www.webwiseone.com/')),
-        $this->l('Volacci', Url::fromUri('http://www.volacci.com/')),
-        $this->l('lanetro', Url::fromUri('http://www.lanetro.com/')),
-        $this->l('Coupons Dealuxe', Url::fromUri('http://couponsdealuxe.com/')),
+        \Drupal::l('Symantec', Url::fromUri('http://www.symantec.com/')),
+        \Drupal::l('WebWise Solutions', Url::fromUri('http://www.webwiseone.com/')),
+        \Drupal::l('Volacci', Url::fromUri('http://www.volacci.com/')),
+        \Drupal::l('lanetro', Url::fromUri('http://www.lanetro.com/')),
+        \Drupal::l('Coupons Dealuxe', Url::fromUri('http://couponsdealuxe.com/')),
       );
       // Don't extract the following string for translation.
       $blurb = '<div class="description"><p>Thank you for helping test the XML sitemap module rewrite. Please consider helping offset developer free time by <a href="http://davereid.chipin.com/">donating</a> or if your company is interested in sponsoring the rewrite or a specific feature, please <a href="http://davereid.net/contact">contact the developer</a>. Thank you to the following current sponsors: ' . implode(', ', $sponsors) . ', and all the individuals that have donated. This message will not be seen in the stable versions.</p></div>';
